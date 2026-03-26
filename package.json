@@ -1,0 +1,39 @@
+{
+  "name": "esbuild",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "cross-env MODE=production node ./config/esbuild-run.mjs",
+    "start": "node ./config/esbuild-dev-server.js",
+    "serve": "serve -l 1234 -s build",
+    "clean-dev": "cross-env CLEAN=true node ./config/esbuild-run.mjs",
+    "lint": "eslint ./src"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@babel/preset-react": "^7.24.1",
+    "@craftamap/esbuild-plugin-html": "^0.6.1",
+    "cross-env": "^7.0.3",
+    "esbuild": "^0.20.2",
+    "esbuild-plugin-clean": "^1.0.1",
+    "esbuild-plugin-copy": "^2.1.1",
+    "esbuild-plugin-license": "^1.2.2",
+    "esbuild-plugin-styled-components": "^2.2.2",
+    "eslint": "^8.57.0",
+    "eslint-config-airbnb": "^19.0.4",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-jsx-a11y": "^6.8.0",
+    "eslint-plugin-react": "^7.34.1",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "minify-html-literals": "^1.3.5",
+    "serve": "^14.2.1"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "styled-components": "^6.1.0"
+  }
+}
