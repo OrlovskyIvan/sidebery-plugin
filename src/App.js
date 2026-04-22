@@ -7,7 +7,6 @@ import GlobalStyle from "./components/GlobalStyles";
 
 const Wrap = styled.div`
 	position: relative;
-	display: flex;
 	flex-direction: row;
 	justify-content: flex-start;
 	flex-wrap: wrap;
@@ -17,8 +16,11 @@ const Wrap = styled.div`
 `
 
 const FoldersSection = styled.div`
-	display: flex;
+	position: relative;
 	overflow: scroll;
+	z-index: 2;
+	height: 800px;
+	width: 100000px;
 `
 
 const LinksWrap = styled.div`
@@ -57,23 +59,21 @@ const TreeWrap = styled.div`
 `
 
 const FoldersWrap = styled.div`
-	display: flex;
-	justify-content: flex-start;
-	align-items: flex-start;
-	flex-wrap: wrap;
-	flex-grow: 0;
-	flex-basis: 0%;
+	width: 100%;
+	overflow: scroll;
 `
 
 const Folder = styled.div`
+	position: absolute;
 	display: flex;
 	justify-content: flex-start;
 	align-items: flex-start;
-	min-width: 300px;
-	min-height: 100px;
+	width: ${props => props.$width ? props.$width : 200}px;
+	height: ${props => props.$height ? props.$height : 30}px;;
 	background-color: #e3e3e3;
 	border: 1px solid #000;
-	margin-left: ${props => props.$marginLeft ? props.$marginLeft : 0};
+	left: ${props => props.$left ? props.$left : 0}px;
+	top: ${props => props.$top ? props.$top : 0}px;
 `
 
 const LevelFolderWrap = styled.div`
@@ -86,26 +86,40 @@ const LinesSVG = styled.svg`
 	top:0;
 	left:0;
 	width:100%;
-	height:100%
+	height:100%;
+	z-index: 1;
 `
 
 
 const App = () => {
 	const [activeTab, setActiveTab] = useState(1);
-	const refs = useRef([]);
+	const refs = useRef({});
 	const { containers, id, sidebar : { panels, nav }, tabs } = tabsJSON;
 	const panelsObjKeys = Object.keys(panels);
 	const currentTabLinks = tabs[0][activeTab];
-	let curLvl = 0;
+	let templateJSX = [];
+	const folderWitdth = 200;
+	const folderHeight = 30;
+	const folderMargin = 50;
+	const lvlMargin = 100;
+	
+
 	let deepArr = [];
 	// реальный уровень вкладки в иерархии sidebery
 	let curFolderLvlInData = [];
-	let folderName = '';
+	let elsOnLvl = [];
+	// фактический уровень после сортировки
+	let curLvl = 0;
+	let prevFolderName = '';
 	// папка, которая заполняется в данный момент
 	const linksObj = {};
 	let curFolder = linksObj;
 	let parentFolder = null;
 	linksObj.linksArr = [];
+	// объект, куда кладем по ключу JSX компонент и ссылку на родителя,
+	// чтобы позже делать перерасчет отступа на основе deeperChildsLength
+	// и отрисовать связи в SVG
+	linksObj.JSXAndChildToParentObj = {};
 	
 
 	//console.log('tabs[0]', tabs[0])
@@ -125,10 +139,10 @@ const App = () => {
 
 	for (let i = 0; i < currentTabLinks.length; i++) {
 		let { title, url, lvl } = currentTabLinks[i];
-		
+				
 		const isFolder = url[0] === 'm';
 				
-		console.log('i -----------', i);
+		console.log('i -------------------------------------------------------', i);
 		//console.log('folderName', folderName)
 		//console.log('linksObj', linksObj)
 		//console.log('curFolder', curFolder)
@@ -212,23 +226,63 @@ const App = () => {
 			//curFolder.deep = [...deepArr];
 
 			
-			/*
-			curFolder.childs = Object.keys(curFolder).filter(item => item !== 'linksArr' && item !== 'deep').length
+			
+			
 
-			let tempObjForSearch = linksObj;
+			//let tempObjForSearch = linksObj;
 			
 			console.log('+++');
-			for (let j = deepArr.length - 1; j >= deepFolderIndex; j++) {
+			for (let j = deepArr.length - 1; j > deepFolderIndex; j--) {
 				console.log('-');
 				console.log(`going through linksObj, ${j} lvl:`, deepArr[j]);
-				console.log('current tempObjForSearch', tempObjForSearch)
-				tempObjForSearch = tempObjForSearch[deepArr[j]];
+
+				let children = Object
+					.keys(curFolder)
+					.filter(
+						item => item !== 'linksArr'
+						&& item !== 'deep'
+						&& item !== 'parent'
+						&& item !== 'i'
+						&& item !== 'children'
+						&& item !== 'deeperChildsLength'
+					).length;
+				
+				console.log('children: ', children);
+
+				curFolder.children = children;
+
+				if (curFolder.deeperChildrenLength !== undefined) {
+					if (curFolder.parent.deeperChildrenLength === undefined) {
+						curFolder.parent.deeperChildrenLength = 0;
+					}
+
+					curFolder.parent.deeperChildrenLength += curFolder.deeperChildrenLength;
+				} else if (curFolder.children !== 0) {
+					if (curFolder.parent.deeperChildrenLength === undefined) {
+						curFolder.parent.deeperChildrenLength = 0;
+					}
+
+					curFolder.parent.deeperChildrenLength += curFolder.children;
+				}
+
+				console.log('curFolder.parent.deeperChildrenLength after = : ', curFolder.parent.deeperChildrenLength)
+				//console.log('current tempObjForSearch', tempObjForSearch)
+				//tempObjForSearch = tempObjForSearch[deepArr[j]];
+
+				//curFolder.parentFolderName = deepArr[deepArr.length - 2];
+
+				linksObj.JSXAndChildToParentObj[deepArr[j]].parentFolderName = deepArr[j - 1];
+
+				curFolder = curFolder.parent;
+				console.log('curFolder after one step down: ', curFolder)
+
+				
 			}
 			console.log('+++');
 
 			// в переменную текущей папки кладем объект на уровень ниже
-			curFolder = tempObjForSearch;
-			*/
+			//curFolder = tempObjForSearch;
+			
 			
 			
 			// удаляем из массива глубины название папки текущего уровня
@@ -237,7 +291,7 @@ const App = () => {
 			console.log('deepArr after slice: ', deepArr);
 			// 
 
-			
+			/*
 			let tempObjForSearch = linksObj;
 			
 			console.log('+++');
@@ -251,11 +305,15 @@ const App = () => {
 
 			// в переменную текущей папки кладем объект на уровень ниже
 			curFolder = tempObjForSearch;
+			*/
 		}
 
 		// если это нулевой уровень
 		if (isFolder && lvl === 0) {
-			folderName = `lvl-${0}-${title}`;
+			const folderName = `lvl-${0}-${title}`;
+
+			prevFolderName = folderName;
+
 			curLvl = 0;
 			// кладем в массив глубины название папки нулевого уровня
 			deepArr[0] = folderName;
@@ -272,9 +330,82 @@ const App = () => {
 			curFolder.linksArr = [];
 
 			curFolder.deep = [...deepArr];
+
+			
+
+			// === ПРИСВОЕНИЕ ОТСТУПА ПАПКЕ В CSS ===
+
+			// в объект для JSX создаем объект с уникальным ключем
+			// и в нем сохраняем ссылку на родителя
+			linksObj.JSXAndChildToParentObj[folderName] = { parent: parentFolder }
+
+			// берем уровень папки из массива глубины
+			let curFolderLvl = deepArr.length - 1;
+			// кол-во элементов на уровне и ниже создаваемой папки
+			let maxElsOnLvlAndBelow = 0;
+			
+			// если еще нет элементов на уровне, записываем 0, чтобы увеличивать число элементов
+			if (elsOnLvl[curFolderLvl] === undefined) {
+				elsOnLvl[curFolderLvl] = 0;
+
+				// !!! закрыть кейс 7
+				// eсли есть предыдущий уровень и элементы на нем
+				// кладем их в текущий уровень
+				let prevFolderLvl = deepArr.length - 2;
+				let prevFolderLvlEls = elsOnLvl[prevFolderLvl];
+				console.log('previous lvl: ', prevFolderLvl);
+				console.log('previous lvl elements: ', prevFolderLvlEls);
+
+				if (prevFolderLvlEls) {
+					elsOnLvl[curFolderLvl] = prevFolderLvlEls - 1;
+				}
+
+			}
+
+			
+
+			// идем по массиву кол-ва элементов на этом уровне и ниже
+			// и находим максимальное кол-во, чтобы расчитать отступ
+			for (let i = curFolderLvl; i < elsOnLvl.length; i++) {
+				let elsOnLvlAmount = elsOnLvl[i];
+				console.log('search of max elements on lvl and below, lvl: ', i, 'elements: ', elsOnLvlAmount);
+
+				if (elsOnLvlAmount > maxElsOnLvlAndBelow) {
+					maxElsOnLvlAndBelow = elsOnLvlAmount;
+				}
+			}
+			
+			console.log('max elements on lvl and below: ', maxElsOnLvlAndBelow);
+			
+			// в массив кол-ва элементов на уровне, на уровень где сейчас
+			// заполняется папка увеличиваем кол-во элементов на 1
+			elsOnLvl[curFolderLvl] += 1;
+			
+
+			curFolder.left = (folderWitdth + folderMargin) * maxElsOnLvlAndBelow;
+			curFolder.top = (folderHeight + lvlMargin) * curLvl;
+
+			// в объект для JSX кладем JSX компонент
+			linksObj.JSXAndChildToParentObj[folderName].JSX = (
+				<Folder
+					key={`${i}-${title}`}
+					$width={folderWitdth}
+					$height={folderHeight}
+					$left={curFolder.left}
+					$top={curFolder.top}
+					ref={
+						el => {
+							if (el) refs.current[folderName] = el
+							else return;
+						}
+					}
+				>
+					{title}	
+				</Folder>
+			)
 		}
 		
-		console.log('folderName after 1 if', folderName)
+		//console.log('folderName after 1 if', folderName)
 		/*
 		// если это не нулевой уровень
 		if (lvl) {
@@ -293,7 +424,7 @@ const App = () => {
 		// если это уровень глубже, то есть папка открывается
 		if (isFolder && lvl !== 0) {
 			curLvl += 1; // <--
-			folderName = `lvl-${curLvl}-${title}`;
+			const folderName = `lvl-${curLvl}-${title}`;
 			console.log('curLvl += 1', curLvl)
 			// кладем в массив глубины название папки текущего уровня
 			deepArr.push(folderName);
@@ -309,9 +440,83 @@ const App = () => {
 			curFolder.linksArr = [];
 
 			curFolder.deep = [...deepArr];
+
+
+
+			// === ПРИСВОЕНИЕ ОТСТУПА ПАПКЕ В CSS ===
+			
+			// в объект для JSX создаем объект с уникальным ключем
+			// и в нем сохраняем ссылку на родителя
+			linksObj.JSXAndChildToParentObj[folderName] = { parent: parentFolder }
+
+			// берем уровень папки из массива глубины
+			let curFolderLvl = deepArr.length - 1;
+			// кол-во элементов на уровне и ниже создаваемой папки
+			let maxElsOnLvlAndBelow = 0;
+			
+			// если еще нет элементов на уровне, записываем 0, чтобы увеличивать число элементов
+			if (elsOnLvl[curFolderLvl] === undefined) {
+				elsOnLvl[curFolderLvl] = 0;
+
+				// !!! закрыть кейс 7
+				// eсли есть предыдущий уровень и элементы на нем
+				// кладем их в текущий уровень
+				let prevFolderLvl = deepArr.length - 2;
+				let prevFolderLvlEls = elsOnLvl[prevFolderLvl];
+				console.log('previous lvl: ', prevFolderLvl);
+				console.log('previous lvl elements: ', prevFolderLvlEls);
+
+				if (prevFolderLvlEls) {
+					elsOnLvl[curFolderLvl] = prevFolderLvlEls - 1;
+				}
+			}
+
+			
+
+			// идем по массиву кол-ва элементов на этом уровне и ниже
+			// и находим максимальное кол-во, чтобы расчитать отступ
+			for (let i = curFolderLvl; i < elsOnLvl.length; i++) {
+				let elsOnLvlAmount = elsOnLvl[i];
+				console.log('search of max elements on lvl and below, lvl: ', i, 'elements: ', elsOnLvlAmount);
+
+				if (elsOnLvlAmount > maxElsOnLvlAndBelow) {
+					maxElsOnLvlAndBelow = elsOnLvlAmount;
+				}
+			}
+			
+			console.log('max elements on lvl and below: ', maxElsOnLvlAndBelow);
+			
+			// в массив кол-ва элементов на уровне, на уровень где сейчас
+			// заполняется папка увеличиваем кол-во элементов на 1
+			elsOnLvl[curFolderLvl] += 1;
+			
+
+			curFolder.left = (folderWitdth + folderMargin) * maxElsOnLvlAndBelow;
+			curFolder.top = (folderHeight + lvlMargin) * curLvl;
+
+			// в объект для JSX кладем JSX компонент
+			linksObj.JSXAndChildToParentObj[folderName].JSX = (
+				<Folder
+					key={`${i}-${title}`}
+					$width={folderWitdth}
+					$height={folderHeight}
+					$left={curFolder.left}
+					$top={curFolder.top}
+					ref={
+						el => {
+							//const refFolderName = folderName;
+							//console.log('set ref:', folderName);
+							if (el) refs.current[folderName] = el
+							else return;
+						}
+					}
+				>
+					{title}	
+				</Folder>
+			)
 		}
 		
-		console.log('folderName after 2 if', folderName)
+		//console.log('folderName after 2 if', folderName)
 
 		// если это уровень ниже, то есть папка закрывается
 		// null + 1 === 1
@@ -432,7 +637,60 @@ const App = () => {
 		//const a = document.getElementById('a')
 		//const b = document.getElementById('b')
 		//const svg = document.getElementById('svg')
-		console.log()
+		let dataObjOfCurrentFolder = null;
+		let objToConnetWithParent = null;
+		let parentToConnect = null;
+
+		Object.keys(refs.current).forEach((key) => {
+			if (key === 'svgEl') return;
+
+			console.log(key)
+			dataObjOfCurrentFolder = linksObj.JSXAndChildToParentObj[key];
+			objToConnetWithParent = refs.current[key];
+			parentToConnect = refs.current[dataObjOfCurrentFolder.parentFolderName];
+
+			console.log('dataObjOfCurrentFolder', dataObjOfCurrentFolder)
+			console.log('objToConnetWithParent', objToConnetWithParent)
+			console.log('parentToConnect', parentToConnect)
+
+			if (parentToConnect) {
+			//if ('lvl-1-Money' === key
+				//|| key === 'lvl-2-Statistics'
+				//|| key === 'lvl-2-Comprasion'
+				//|| key === 'lvl-1-l-pvp'
+			//) {
+				
+
+				const r1 = parentToConnect.getBoundingClientRect()
+				const r2 = objToConnetWithParent.getBoundingClientRect()
+				
+				console.log('r1', r1)
+				console.log('r2', r2)
+				console.log('offsetLeft', parentToConnect.offsetLeft)
+				console.log('offsetTop', parentToConnect.offsetTop)
+
+				const line = document.createElementNS("http://www.w3.org/2000/svg", "line")
+
+				line.setAttribute("x1", parentToConnect.offsetLeft + r1.width / 2)
+				line.setAttribute("y1", parentToConnect.offsetTop + folderHeight)
+
+				line.setAttribute("x2", objToConnetWithParent.offsetLeft + r2.width / 2)
+				line.setAttribute("y2", objToConnetWithParent.offsetTop)
+
+				//line.setAttribute("x1", r1.left + r1.width / 2)
+				//line.setAttribute("y1", r1.bottom)
+
+				//line.setAttribute("x2", r2.left + r2.width / 2)
+				//line.setAttribute("y2", r2.top)
+
+				line.setAttribute("stroke", "black")
+
+				refs.current.svgEl.appendChild(line)
+			}
+			
+			
+		})
+		/*
 		const r1 = refs.current[1].getBoundingClientRect()
 		const r2 = refs.current[2].getBoundingClientRect()
 
@@ -447,17 +705,18 @@ const App = () => {
 		line.setAttribute("stroke", "black")
 
 		refs.current[0].appendChild(line)
-	}, [])
+		*/
+		}, [])
 	
 
 	let tabsJSX = null;
 	let curLvlJsx = null;
 
-	Object.keys(linksObj).map((key) => {
-		if (key !== 'linksArr' && key !== 'deep') {
-			//curLvlJsx = 
-		}
+	templateJSX = Object.keys(linksObj.JSXAndChildToParentObj).map((key) => { 
+		return linksObj.JSXAndChildToParentObj[key].JSX;
 	})
+
+	
 
 	return (
 		<Wrap>
@@ -468,8 +727,21 @@ const App = () => {
 				tabsKeys={panelsObjKeys}
 				setActiveTabHook={setActiveTab}
 			/>
-			<FoldersSection>
-				<FoldersWrap>
+			<FoldersWrap>
+				<FoldersSection>
+					{templateJSX}
+					<LinesSVG ref={el => refs.current['svgEl'] = el} />
+				</FoldersSection>
+			</FoldersWrap>
+			<GlobalStyle />
+		</Wrap>
+	)
+}
+
+export default memo(App)
+
+/*
+<FoldersWrap>
 					<LevelFolderWrap>
 						<Folder ref={el => refs.current[1] = el}>
 							Level 1
@@ -502,14 +774,8 @@ const App = () => {
 						<Folder>Level 3</Folder>
 					</LevelFolderWrap>
 				</FoldersWrap>
-			</FoldersSection>
-			<LinesSVG ref={el => refs.current[0] = el} />
-			<GlobalStyle />
-		</Wrap>
-	)
-}
+*/
 
-export default memo(App)
 
 /*
 <FoldersWrap>
