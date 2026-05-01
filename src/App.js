@@ -4,6 +4,7 @@ import TabsBlock from './blocks/TabsBlock'
 import './assets/css/normalize.css'
 import tabsJSON from './assets/snapshot_pretty.json'
 import GlobalStyle from "./components/GlobalStyles";
+import Folder from './blocks/Folder';
 
 const Wrap = styled.div`
 	display: flex;
@@ -18,10 +19,9 @@ const Wrap = styled.div`
 
 const FoldersSection = styled.div`
 	position: relative;
-	overflow: scroll;
-	z-index: 2;
 	min-height: 100%;
-	width: 100000px;
+	min-width: 100%;
+	width: ${props => props.$width ? props.$width : 0}px;
 `
 
 const LinksWrap = styled.div`
@@ -64,7 +64,7 @@ const FoldersWrap = styled.div`
 	overflow: scroll;
 	height: 100%;
 `
-
+/*
 const Folder = styled.div`
 	position: absolute;
 	width: ${props => props.$width ? props.$width : 200}px;
@@ -79,6 +79,7 @@ const Folder = styled.div`
 	overflow-wrap: break-word;
 	z-index: 2;
 `
+*/
 // white-space: normal;
 //text-overflow: ellipsis;
 const LevelFolderWrap = styled.div`
@@ -97,9 +98,7 @@ const LinesSVG = styled.svg`
 
 const GroupSVG = styled.g``
 
-const RectSVG = styled.rect`
-	
-`
+const RectSVG = styled.rect``
 /*
 position: absolute;
 	left: 0;
@@ -135,10 +134,12 @@ const App = () => {
 	const { containers, id, sidebar: { panels, nav }, tabs } = tabsJSON;
 	const panelsObjKeys = Object.keys(panels);
 	const currentTabLinks = tabs[0][activeTab];
+	const currentTabLinksLength = currentTabLinks.length;
 	let templateJSX = [];
-	const folderWitdth = 80;
+	const folderWitdth = 90;
 	const folderHeight = 30;
 	const folderMargin = 5;
+	const folderBorder = 2;
 	const lvlMargin = 60;
 	const templateJSXSVGGradient = [];
 	let curTabDataObj = cacheLinksObj.current[activeTab];
@@ -177,8 +178,9 @@ const App = () => {
 		curTabDataObj.JSXAndChildToParentObj = {};
 		curTabDataObj.refs = {};
 		curTabDataObj.maxLvl = 0;
+		curTabDataObj.width = 0;
 
-		for (let i = 0; i < currentTabLinks.length; i++) {
+		for (let i = 0; i < currentTabLinksLength; i++) {
 
 
 
@@ -226,7 +228,6 @@ const App = () => {
 			if (isFolder && title === 'Home group') {
 				continue;
 			}
-
 
 			// если это нулевой уровень, но не папка, то кладем вкладку
 			// прямо в linksObj.linksArr и пропускаем проход
@@ -317,6 +318,8 @@ const App = () => {
 					//curFolder.parentFolderName = deepArr[deepArr.length - 2];
 					// в объект JSX и ссылок на родителя кладем имя родительской папки
 					curTabDataObj.JSXAndChildToParentObj[deepArr[j]].parentFolderName = deepArr[j - 1];
+					// в объект JSX и ссылок на родителя кладем массив ссылок
+					//curTabDataObj.JSXAndChildToParentObj[deepArr[j]].JSXdata.linksArr = curFolder.linksArr;
 
 					curFolder = curFolder.parent;
 					console.log('curFolder after one step down: ', curFolder)
@@ -414,40 +417,24 @@ const App = () => {
 				curFolder.left = (folderWitdth + folderMargin) * maxElsOnLvlAndBelow;
 				curFolder.top = (folderHeight + lvlMargin) * curLvl;
 
-				// в объект для JSX кладем JSX компонент
-				curTabDataObj.JSXAndChildToParentObj[folderName].JSX = (
-					<Folder
-						key={`${i}-${title}`}
-						$width={folderWitdth}
-						$height={folderHeight}
-						$left={curFolder.left}
-						$top={curFolder.top}
-						ref={
-							el => {
-								if (el) curTabDataObj.refs[folderName] = el
-								else return;
-							}
-						}
-					>
-						{title}
-					</Folder>
-				)
+				// в объект для JSX кладем данные для JSX компонента
+				curTabDataObj.JSXAndChildToParentObj[folderName].JSXdata = {
+					key: `${i}-${title}`,
+					folderName,
+					$width: folderWitdth,
+					$height: folderHeight,
+					$left: curFolder.left,
+					$top: curFolder.top,
+					$folderBorder: folderBorder,
+					$zIndex: currentTabLinksLength + 10 - i,
+					linksArr: curFolder.linksArr,
+					refFunc: el => {
+						if (el) curTabDataObj.refs[folderName] = el
+						else return;
+					},
+					title
+				};
 			}
-
-			//console.log('folderName after 1 if', folderName)
-			/*
-			// если это не нулевой уровень
-			if (lvl) {
-				folderName = `lvl-${lvl}-${title}`;
-				curLvl = lvl;
-				// кладем в массив глубины название папки текущего уровня
-				deepArr.push(folderName);
-				// создаем объект для папки текущего уровня
-				curFolder[folderName] = {};
-				// и массив для ссылок
-				curFolder[folderName].linksArr = [];
-			}
-			*/
 
 
 			// если это уровень глубже, то есть папка открывается
@@ -542,26 +529,23 @@ const App = () => {
 				curFolder.left = (folderWitdth + folderMargin) * (elsOnLvl[curFolderLvl] - 1);
 				curFolder.top = (folderHeight + lvlMargin) * curLvl;
 
-				// в объект для JSX кладем JSX компонент
-				curTabDataObj.JSXAndChildToParentObj[folderName].JSX = (
-					<Folder
-						key={`${i}-${title}`}
-						$width={folderWitdth}
-						$height={folderHeight}
-						$left={curFolder.left}
-						$top={curFolder.top}
-						ref={
-							el => {
-								//const refFolderName = folderName;
-								//console.log('set ref:', folderName);
-								if (el) curTabDataObj.refs[folderName] = el
-								else return;
-							}
-						}
-					>
-						{title}
-					</Folder>
-				)
+				// в объект для JSX кладем данные для JSX компонента
+				curTabDataObj.JSXAndChildToParentObj[folderName].JSXdata = {
+					key: `${i}-${title}`,
+					folderName,
+					$width: folderWitdth,
+					$height: folderHeight,
+					$left: curFolder.left,
+					$top: curFolder.top,
+					$folderBorder: folderBorder,
+					$zIndex: currentTabLinksLength + 10 - i,
+					linksArr: curFolder.linksArr,
+					refFunc: el => {
+						if (el) curTabDataObj.refs[folderName] = el
+						else return;
+					},
+					title
+				};
 			}
 
 			//console.log('folderName after 2 if', folderName)
@@ -579,6 +563,11 @@ const App = () => {
 			if (curLvl > curTabDataObj.maxLvl) {
 				curTabDataObj.maxLvl = curLvl;
 			}
+
+			if (curFolder.left > curTabDataObj.width) {
+				curTabDataObj.width = curFolder.left + folderWitdth;
+			}
+			
 		}
 	}
 
@@ -607,7 +596,7 @@ const App = () => {
 
 		Object.keys(curTabDataObj.refs).forEach((key) => {
 			if (key === 'svgEl' || key === 'svgGroupEl') return;
-
+			//console.log(curTabDataObj.refs)
 			//console.log(key)
 			dataObjOfCurrentFolder = curTabDataObj.JSXAndChildToParentObj[key];
 			objToConnetWithParent = curTabDataObj.refs[key];
@@ -655,7 +644,9 @@ const App = () => {
 	let curLvlJsx = null;
 
 	templateJSX = Object.keys(curTabDataObj.JSXAndChildToParentObj).map((key) => {
-		return curTabDataObj.JSXAndChildToParentObj[key].JSX;
+		const JSXdata = curTabDataObj.JSXAndChildToParentObj[key].JSXdata;
+		console.log(key, JSXdata.linksArr);
+		return <Folder {...JSXdata} refData={curTabDataObj.refs}>{JSXdata.title}</Folder>
 	})
 
 	for (let i = 0; i <= curTabDataObj.maxLvl; i++) {
@@ -681,7 +672,7 @@ const App = () => {
 				setActiveTabHook={setActiveTab}
 			/>
 			<FoldersWrap>
-				<FoldersSection>
+				<FoldersSection $width={curTabDataObj.width}>
 					{templateJSX}
 					<LinesSVG ref={el => curTabDataObj.refs['svgEl'] = el}>
 						{templateJSXSVGGradient}
