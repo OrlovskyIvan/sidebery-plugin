@@ -10,18 +10,31 @@ const Wrap = styled.li`
 	text-overflow: ellipsis;
 	overflow: hidden;
 	border-bottom: 1px solid #000;
-	padding: 2px;
-	padding-right: 14px;
+	padding: 3px;
+	padding-right: 22px;
 	font-size: 14px;
+    line-height: 14px;
 	font-weight: normal;
     cursor: pointer;
     &:hover {
         color: #fff;
         background-color: #474747;
     }
+    &:hover::after {
+        color: #fff;
+    }
+    &::after {
+        content: '${props => props.$isCopied ? '\u2714' : ''}';
+        position: absolute;
+        right: 3px;
+        top: 50%;
+        margin-top: -8px;
+        color: #474747;
+        font-size: 16px;
+        line-height: 16px;
+        text-align: center;
+    }
 `;
-
-
 
 const LinksItem = ({ url, children }) => {
 	const [copied, setCopied] = useState(false);
@@ -34,12 +47,13 @@ const LinksItem = ({ url, children }) => {
             // сброс через время (опционально)
             setTimeout(() => setCopied(false), 1000);
         } catch (err) {
-            console.error("Ошибка копирования:", err);
+            console.error("Ошибка копирования url:", err);
         }
     };
 
 	return (
 		<Wrap
+            $isCopied={copied}
             onClick={handleOnCopy}
         >
             {children}

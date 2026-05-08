@@ -35,6 +35,7 @@ const config = {
 		'.ttf': 'file',
 		'.woff': 'file',
 		'.woff2': 'file',
+		'.json': 'file',
 	},
 	target: ['es2015', 'edge40', 'chrome58', 'firefox57', 'safari11', 'node12'],
 	plugins: getPluginsArr(isDev, isProd, cleanDevServerFolder, devOutdir, buildOurdir)

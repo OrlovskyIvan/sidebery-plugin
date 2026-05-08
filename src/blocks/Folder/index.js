@@ -2,7 +2,6 @@ import { memo, useState, setRef } from 'react';
 import { styled } from "styled-components";
 import LinksItem from './LinksItem';
 
-
 const TabsButton = styled.button`
 	display: block;
 	position: absolute;
@@ -23,15 +22,14 @@ const TabsButton = styled.button`
 		opacity: 0.7;
 	}
 `;
-//right: 2px;
-//top: 50%;
-//	margin-top: -5px;
+
 const FolderWrap = styled.div`
 	position: absolute;
 	width: ${props => props.$width ? props.$width : 200}px;
 	min-height: ${props => props.$height ? props.$height : 30}px;
 	background-color: #e3e3e3;
 	border: ${props => props.$folderBorder ? props.$folderBorder : 3}px solid #000;
+	border-radius: 4px;
 	left: ${props => props.$left ? props.$left : 0}px;
 	top: ${props => props.$top ? props.$top : 0}px;
 	font-size: 12px;
@@ -50,7 +48,16 @@ const LinksList = styled.ul`
 	border: 1px solid #000;
 `;
 
-const Folder = ({ folderName, refFunc, $folderBorder, refData, linksArr, children, ...props }) => {
+const Folder = ({
+		folderName,
+		refFunc,
+		url,
+		$folderBorder,
+		refData,
+		linksArr,
+		children,
+		...props
+	}) => {
 	const [isOpen, setIsOpen] = useState({ open: false, top: 0 });
 	const [copied, setCopied] = useState(false);
 
@@ -80,18 +87,20 @@ const Folder = ({ folderName, refFunc, $folderBorder, refData, linksArr, childre
 						() => {
 							const folderRef = refData[folderName];
 							const pos = refData[folderName].getBoundingClientRect()
-							console.log(refData[folderName]);
-							console.log(pos);
-							//setIsOpen(prev => {
-								//console.log(prev);
-								//return ({ open: !prev.open, top: folderRef.offsetTop + $height });
-								
-							//});
+							//console.log(refData[folderName]);
+							//console.log(pos);
+
 							setIsOpen({
 								open: !isOpen.open,
 								top: pos.height - $folderBorder,
 								left: -$folderBorder
 							});
+
+							try {
+								navigator.clipboard.writeText(url);
+							} catch (err) {
+								console.error("Ошибка копирования url:", err);
+							}
 						}
 					}
 				>
