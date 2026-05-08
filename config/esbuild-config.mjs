@@ -11,7 +11,7 @@ const buildOurdir = './build';
 const config = {
 	outdir: isDev ? devOutdir : buildOurdir,
 	entryPoints: ['./src/index.js'],
-	publicPath: '/',
+	publicPath: '',
 	entryNames: '[dir]/bundle.[name]-[hash]',
 	assetNames: '[dir]/[name]',
 	bundle: true,
